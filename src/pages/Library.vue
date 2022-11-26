@@ -16,7 +16,7 @@
         <q-item
           clickable
           v-ripple
-          v-for="playlist in playlists"
+          v-for="playlist in files.playlists"
           :key="playlist.name"
           @click="openPlaylist(playlist.name)"
         >
@@ -157,6 +157,7 @@
 
 <script>
 import { useQuasar } from "quasar";
+import { useFilesStore } from "src/stores/files";
 import { useMainStore } from "src/stores/main";
 
 export default {
@@ -174,7 +175,7 @@ export default {
       this.$router.push("/library/playlist/" + pname);
     },
     newPlaylist: async function () {
-      useQuasar().loading.show({
+      this.quasar.loading.show({
         delay: 400, // ms
       });
 
@@ -191,9 +192,9 @@ export default {
           },
         }
       );
-      useQuasar().loading.hide();
+      this.quasar.loading.hide();
 
-      useQuasar().notify({
+      this.quasar.notify({
         type: "positive",
         message: "Playlist created",
       });
@@ -251,23 +252,26 @@ export default {
             }
           });
         });
-      //this.playlists.push({ name: "All Tracks.seq" });
-      done();
+      this.playlists.push({ name: "All Tracks.seq" });
     },
   },
   mounted: async function () {
-    useQuasar().loading.show({
+    this.quasar.loading.show({
       delay: 100, // ms
     });
     await this.refreshFiles(function () {});
-    useQuasar().loading.hide();
+    this.quasar.loading.hide();
     this.loaded = true;
   },
   setup() {
     const store = useMainStore();
+    const files = useFilesStore();
+    const quasar = useQuasar();
 
     return {
       store,
+      files,
+      quasar,
     };
   },
 };
