@@ -182,7 +182,7 @@ export default {
       }
     },
     renamePlaylist: async function () {
-      useQuasar().loading.show({
+      this.quasar.loading.show({
         delay: 100, // ms
       });
 
@@ -208,9 +208,9 @@ export default {
         },
       });
 
-      useQuasar().loading.hide();
+      this.quasar.loading.hide();
       this.$router.go(-1);
-      useQuasar().notify({
+      this.quasar.notify({
         type: "positive",
         message: "Playlist renamed",
       });
@@ -221,7 +221,7 @@ export default {
       }
     },
     saveEdits: async function () {
-      useQuasar().loading.show({
+      this.quasar.loading.show({
         delay: 100, // ms
       });
       let playlistFile = "";
@@ -237,8 +237,8 @@ export default {
           "Content-Type": "multipart/form-data",
         },
       });
-      useQuasar().loading.hide();
-      useQuasar().notify({
+      this.quasar.loading.hide();
+      this.quasar.notify({
         type: "positive",
         message: "Playlist saved",
       });
@@ -279,18 +279,20 @@ export default {
     if (this.$route.params.name != "All Tracks.seq") {
       this.name = this.$route.params.name.split("-")[1].replace(".seq", "");
     }
-    useQuasar().loading.show({
+    this.quasar.loading.show({
       delay: 100, // ms
     });
     await this.refreshFiles(function () {});
-    useQuasar().loading.hide();
+    this.quasar.loading.hide();
     this.loaded = true;
   },
   setup() {
     const store = useMainStore();
+    const quasar = useQuasar();
 
     return {
       store,
+      quasar,
     };
   },
 };

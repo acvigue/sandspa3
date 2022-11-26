@@ -22,8 +22,8 @@ export default {
   name: "SPAFooter",
   data() {
     return {
-      tab: ""
-    }
-  }
+      tab: "",
+    };
+  },
 };
 </script>

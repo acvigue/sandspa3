@@ -10,7 +10,7 @@
           class="q-mr-sm"
           @click="$router.go(-1)"
         />
-        <q-toolbar-title class="text-center">Popular Tracks</q-toolbar-title>
+        <q-toolbar-title class="text-center">{{ pageTitle }}</q-toolbar-title>
         <q-btn flat round dense class="q-mr-sm" />
       </q-toolbar>
     </q-header>
@@ -23,7 +23,7 @@
           </q-inner-loading>
           <q-item-section avatar>
             <img
-              style="height: 75px;"
+              style="height: 75px"
               :src="
                 'https://webcenter.sisyphus-industries.com' +
                 pattern.large_photo
@@ -84,46 +84,35 @@
 
 <script>
 import { useMainStore } from "src/stores/main";
+import { useFilesStore } from "src/stores/files";
+import { useQuasar } from "quasar";
 
 export default {
-  name: "CommunityHome",
+  name: "CommunityItemList",
   components: {},
   data: function () {
     return {
       patterns: [],
-      allPatterns: [],
-      existingPatterns: [],
+      allPatterns: []
     };
+  },
+  computed: {
+    pageTitle() {
+      if (this.$route.params.sort == "newest") {
+        return "Newest Tracks";
+      } else if (this.$route.params.sort == "popular") {
+        return "Popular Tracks";
+      } else {
+        return "Playlists";
+      }
+    },
   },
   methods: {
     downloadPattern: async function (pattern) {
       pattern.is_downloading = true;
 
-      //Get pattern data from Webcenter
-      const ptData = (
-        await this.$axios.get(
-          "https://webcenter.sisyphus-industries.com/tracks/" +
-            pattern.track_id +
-            "/download.json",
-          { headers: { Authorization: this.store.secure.webcenterToken } }
-        )
-      ).data.resp;
-      var formData = new FormData();
-      var blob = new Blob([ptData], { type: "text/plain" });
-      formData.append(
-        "file",
-        blob,
-        pattern.track_id + "-" + pattern.name.replace(/-/g, "") + ".thr"
-      );
-      await this.$axios.post(
-        this.store.tableBaseURL + "/uploadtofileman",
-        formData,
-        {
-          headers: {
-            "Content-Type": "multipart/form-data",
-          },
-        }
-      );
+      await this.files.addTrack(pattern);
+
       pattern.is_downloading = false;
       pattern.is_downloaded = true;
     },
@@ -141,38 +130,30 @@ export default {
     openPlaylist: function (pname) {
       this.$router.push("/community/playlist/" + pname);
     },
-    refreshFiles: async function (done) {
-      if (this.store.secure.webcenterToken == "") {
-        //Log in to Webcenter
-        await this.store.loginToWebCenter();
-      }
+  },
+  async mounted() {
+    this.quasar.loading.show({
+      delay: 0, // ms
+    });
 
-      //Get all files on bot
-      await this.$axios
-        .get(this.store.tableBaseURL + "/filelist")
-        .then((response) => {
-          response.data.files.forEach((file) => {
-            if (file.name.includes(".THR") || file.name.includes(".thr")) {
-              //thr
-              this.existingPatterns.push(file.name.split("-")[0]);
-            }
-          });
-        });
+    if (this.store.secure.webcenterToken == "") {
+      //Log in to Webcenter
+      await this.store.loginToWebCenter();
+    }
 
-      //Get popular tracks
+    if (this.$route.params.sort != "playlists") {
+      const sort = this.$route.params.sort == "newest" ? "newest_designs" : "most_popular";
+
       await this.$axios
         .get(
-          "https://webcenter.sisyphus-industries.com/tracks.json?sort=most_popular",
+          `https://webcenter.sisyphus-industries.com/tracks.json?sort=${sort}`,
           { headers: { Authorization: this.store.secure.webcenterToken } }
         )
         .then((response) => {
           const tracks = response.data.resp;
           tracks.forEach((track) => {
             track.is_downloading = false;
-            track.is_downloaded = false;
-            if (this.existingPatterns.includes(track.track_id)) {
-              track.is_downloaded = true;
-            }
+            track.is_downloaded = (this.files.tracks.find(trackobj => trackobj.id === track.id) != undefined);
             this.allPatterns.push(track);
           });
         });
@@ -186,17 +167,20 @@ export default {
           this.patterns.push(pattern);
         }
       });
-      done();
-    },
-  },
-  mounted: function () {
-    this.refreshFiles();
+    } else {
+    }
+
+    this.quasar.loading.hide();
   },
   setup() {
     const store = useMainStore();
+    const files = useFilesStore();
+    const quasar = useQuasar();
 
     return {
       store,
+      files,
+      quasar,
     };
   },
 };

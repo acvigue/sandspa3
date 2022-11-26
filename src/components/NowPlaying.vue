@@ -7,10 +7,7 @@
         Playing from
         {{ store.playlistName }}
       </div>
-      <div
-        v-if="!store.isPlaylist"
-        class="nowplaying__container-topline"
-      >
+      <div v-if="!store.isPlaylist" class="nowplaying__container-topline">
         Now Playing
       </div>
       <div class="nowplaying__container-trackname">
@@ -62,14 +59,17 @@
 
 <script>
 import { useMainStore } from "src/stores/main";
+import { useQuasar } from "quasar";
 
 export default {
   name: "NowPlaying",
   setup() {
     const store = useMainStore();
+    const quasar = useQuasar();
 
     return {
       store,
+      quasar,
     };
   },
 };

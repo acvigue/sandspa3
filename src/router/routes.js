@@ -25,19 +25,9 @@ const routes = [
     component: () => import("pages/Community.vue"),
   },
   {
-    path: "/community/popular",
-    name: "CommunityPopular",
-    component: () => import("pages/CommunityPopular.vue"),
-  },
-  {
-    path: "/community/newest",
-    name: "CommunityNewest",
-    component: () => import("pages/CommunityNewest.vue"),
-  },
-  {
-    path: "/community/playlists",
-    name: "CommunityPlaylists",
-    component: () => import("pages/CommunityPlaylists.vue"),
+    path: "/community/:sort",
+    name: "CommunityItemList",
+    component: () => import("pages/CommunityItemList.vue"),
   },
   {
     path: "/community/playlist/:name/:id",

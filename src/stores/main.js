@@ -10,6 +10,15 @@ export const useMainStore = defineStore("main", {
       file: "",
       rpm: 0,
       playlistName: "",
+      autoDim: 0,
+      redVal: 0,
+      greenVal: 0,
+      blueVal: 0,
+      ledBrightness: 0,
+      ledOn: 0,
+      effectID: 0,
+      effectSpeed: 0,
+      espV: "",
     },
     tableBaseURL: "http://sandy2.local",
     secure: {
@@ -17,6 +26,65 @@ export const useMainStore = defineStore("main", {
       webcenterPassword: "Goober312$",
       webcenterToken: "",
     },
+    effectArray: [
+      'Static',
+      'Blink',
+      'Breath',
+      'Color Wipe',
+      'Color Wipe Inverse',
+      'Color Wipe Reverse',
+      'Color Wipe Reverse Inverse',
+      'Color Wipe Random',
+      'Random Color',
+      'Single Dynamic',
+      'Multi Dynamic',
+      'Rainbow',
+      'Rainbow Cycle',
+      'Scan',
+      'Dual Scan',
+      'Fade',
+      'Theater Chase',
+      'Theater Chase Rainbow',
+      'Running Lights',
+      'Twinkle',
+      'Twinkle Random',
+      'Twinkle Fade',
+      'Twinkle Fade Random',
+      'Sparkle',
+      'Flash Sparkle',
+      'Hyper Sparkle',
+      'Strobe',
+      'Strobe Rainbow',
+      'Multi Strobe',
+      'Blink Rainbow',
+      'Chase White',
+      'Chase Color',
+      'Chase Random',
+      'Chase Rainbow',
+      'Chase Flash',
+      'Chase Flash Random',
+      'Chase Rainbow White',
+      'Chase Blackout',
+      'Chase Blackout Rainbow',
+      'Color Sweep Random',
+      'Running Color',
+      'Running Red Blue',
+      'Running Random',
+      'Larson Scanner',
+      'Comet',
+      'Fireworks',
+      'Fireworks Random',
+      'Merry Christmas',
+      'Fire Flicker',
+      'Fire Flicker (soft)',
+      'Fire Flicker (intense)',
+      'Circus Combustus',
+      'Halloween',
+      'Bicolor Chase',
+      'Tricolor Chase',
+      'TwinkleFOX',
+      'Custom'
+    ]
   }),
 
   getters: {
@@ -27,17 +95,25 @@ export const useMainStore = defineStore("main", {
       return state.raw.Qd;
     },
     fileName(state) {
-      return state.raw.file
-        .split("-")[1]
-        .replace(".thr", "")
-        .replace(".THR", "");
+      try {
+        return state.raw.file
+          .split("-")[1]
+          .replace(".thr", "")
+          .replace(".THR", "");
+      } catch (e) {
+        return state.raw.file;
+      }
     },
     playlistName(state) {
-      return state.raw.playlistName
-        .split("-")[0]
-        .replace("sd/", "")
-        .replace(".seq", "")
-        .replace(".SEQ", "");
+      try {
+        return state.raw.playlistName
+          .split("-")[1]
+          .replace("sd/", "")
+          .replace(".seq", "")
+          .replace(".SEQ", "");
+      } catch (e) {
+        return state.raw.playlistName;
+      }
     },
     trackID(state) {
       return state.raw.file.split("-")[0].replace("sd/", "");
@@ -70,9 +146,22 @@ export const useMainStore = defineStore("main", {
       axios.get(`${this.tableBaseURL}/deleteFile/${file}`);
     },
     setNewStatus(newStatus) {
-      this.raw == newStatus;
+      this.raw.Qd = newStatus.Qd;
+      this.raw.autoDim = newStatus.autoDim;
+      this.raw.blueVal = newStatus.blueVal;
+      this.raw.redVal = newStatus.redVal;
+      this.raw.effectID = newStatus.effectID;
+      this.raw.effectSpeed = newStatus.effectSpeed;
+      this.raw.espV = newStatus.espV;
+      this.raw.file = newStatus.file ?? "";
+      this.raw.greenVal = newStatus.greenVal;
+      this.raw.ledBrightness = newStatus.ledBrightness;
+      this.raw.ledOn = newStatus.ledOn;
+      this.raw.playlist = newStatus.playlist ?? false;
+      this.raw.playlistName = newStatus.playlistName ?? "";
+      this.raw.rpm = newStatus.rpm ?? 0;
 
-      if (newStatus.pause == 0 && newStatus.file != "") {
+      if (newStatus.pause == 0 && newStatus.file != "" && newStatus.Qd != 0) {
         this.status = "playing";
       } else if (newStatus.pause == 1 && newStatus.file != "") {
         this.status = "paused";
@@ -81,29 +170,52 @@ export const useMainStore = defineStore("main", {
       }
     },
 
-    setBrightness(number) {
-      console.log(`setting brightness to ${number}`);
+    async setBrightness(number) {
+      if(this.raw.ledBrightness != number) {
+        console.log(`setting brightness to ${number}`);
+        this.raw.ledBrightness = number;
+        await this._updateLedConfig();
+      }
     },
 
-    setAutoDim(enabled) {
-      console.log(`setting autodim to ${enabled}`);
+    async setAutoDim(enabled) {
+      if(this.raw.autoDim != enabled) {
+        console.log(`setting autodim to ${enabled}`);
+        this.raw.autoDim = enabled;
+        await this._updateLedConfig();
+      }
     },
 
-    setColor(red, green, blue) {
-      console.log(`setting color to ${red},${green},${blue}`);
+    async setColor(red, green, blue) {
+
+      if(this.raw.redVal != red || this.raw.greenVal != green || this.raw.blueVal != blue) {
+        console.log(`setting color to ${red},${green},${blue}`);
+        this.raw.redVal = red;
+        this.raw.greenVal = green;
+        this.raw.blueVal = blue;
+        await this._updateLedConfig();
+      }
     },
 
-    setEffect(id) {
-      console.log(`setting effect to ${id}`);
+    async setEffect(id) {
+      if(this.raw.effectID != id) {
+        console.log(`setting effect to ${id}`);
+        this.raw.effectID = id;
+        await this._updateLedConfig();
+      }
     },
 
-    setSpeed(number) {
-      console.log(`setting effect speed to ${number}`);
+    async setSpeed(number) {
+      if(this.raw.effectSpeed != number) {
+        console.log(`setting effect speed to ${number}`);
+        this.raw.effectSpeed = number;
+        await this._updateLedConfig();
+      }
     },
 
     fetchInitialStatus() {
       axios.get(this.tableBaseURL + "/status").then((resp) => {
-        this.setNewStatus(resp);
+        this.setNewStatus(resp.data);
       });
     },
 
@@ -120,5 +232,24 @@ export const useMainStore = defineStore("main", {
 
       return true;
     },
+
+    async _updateLedConfig() {
+      const config = {
+        ledOn: this.raw.ledOn,
+        ledBrightness: this.raw.ledBrightness,
+        redVal: this.raw.redVal,
+        greenVal: this.raw.greenVal,
+        blueVal: this.raw.blueVal,
+        effectID: this.raw.effectID,
+        effectSpeed: this.raw.effectSpeed,
+        autoDim: this.raw.autoDim
+      }
+
+      await axios.post(`${this.tableBaseURL}/setled`, JSON.stringify(config), {
+        headers: {
+          "Content-Type": "text/plain"
+        }
+      });
+    }
   },
 });

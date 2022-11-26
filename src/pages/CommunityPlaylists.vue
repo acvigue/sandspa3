@@ -23,7 +23,7 @@
           </q-inner-loading>
           <q-item-section avatar>
             <img
-              style="height: 75px;"
+              style="height: 75px"
               :src="
                 'https://webcenter.sisyphus-industries.com/uploads/track/thr/' +
                 pattern.db_tracks[pattern.featured_track] +
@@ -85,6 +85,7 @@
 
 <script>
 import { useMainStore } from "src/stores/main";
+import { useQuasar } from "quasar";
 
 export default {
   name: "CommunityPlaylists",
@@ -99,22 +100,22 @@ export default {
   methods: {
     downloadPattern: async function (pattern) {
       pattern.is_downloading = true;
-
       //Get pattern data from Webcenter
       const ptData = (
-        await this.$axios.get(
+        await this.$axios.post(
           "https://webcenter.sisyphus-industries.com/tracks/" +
-            pattern.track_id +
-            "/download.json",
-          { headers: { Authorization: this.store.secure.webcenterToken } }
+            pattern.playlist_id +
+            "/download",
+          "pi_id=00000000dad7f8cc&mac_address=",
+          { headers: { Authorization: this.store } }
         )
-      ).data.resp;
+      ).data;
       var formData = new FormData();
       var blob = new Blob([ptData], { type: "text/plain" });
       formData.append(
         "file",
         blob,
-        pattern.track_id + "-" + pattern.name.replace(/-/g, "") + ".thr"
+        pattern.playlist_id + "-" + pattern.name.replace(/-/g, "") + ".thr"
       );
       await this.$axios.post(
         this.store.tableBaseURL + "/uploadtofileman",
@@ -195,9 +196,11 @@ export default {
   },
   setup() {
     const store = useMainStore();
+    const quasar = useQuasar();
 
     return {
       store,
+      quasar,
     };
   },
 };

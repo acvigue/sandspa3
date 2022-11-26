@@ -135,6 +135,7 @@
 
 <script>
 import { useMainStore } from "src/stores/main";
+import { useQuasar } from "quasar";
 
 export default {
   name: "HomePage",
@@ -145,9 +146,11 @@ export default {
   },
   setup() {
     const store = useMainStore();
+    const quasar = useQuasar();
 
     return {
       store,
+      quasar,
     };
   },
 };

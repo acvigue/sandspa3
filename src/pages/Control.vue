@@ -7,28 +7,8 @@
     </q-header>
 
     <q-card style="margin: 2vw" bordered class="my-card">
-      <!--
       <q-card-section>
-        <div class="text-h6">Speed</div>
-      </q-card-section>
-
-      <q-card-section class="q-pt-none row justify-around items-center">
-        <q-icon name="remove" style="font-size: 25px" />
-        <q-slider
-          color="black"
-          style="width: 75% !important"
-          v-model="$root.status.rpm"
-          :min="1"
-          :max="20"
-          label
-          @change="$root.setSpeed"
-        />
-        <q-icon name="add" style="font-size: 25px" />
-      </q-card-section>
-      -->
-
-      <!--
-      <q-card-section>
+        <div class="text-h5 text-center">Lights</div>
         <div class="text-h6">Brightness</div>
       </q-card-section>
 
@@ -37,11 +17,11 @@
         <q-slider
           color="black"
           style="width: 75% !important"
-          v-model="$root.wledStatus.state.bri"
+          v-model="store.raw.ledBrightness"
           :min="0"
           :max="255"
           label
-          @change="$root.setBrightness"
+          @change="store._updateLedConfig()"
         />
         <q-icon name="brightness_7" style="font-size: 25px" />
       </q-card-section>
@@ -55,10 +35,10 @@
           style="width: 95% !important"
           outlined
           v-model="lightingMode"
-          :options="this.$root.wledStatus.effects"
+          :options="store.effectArray"
           color="black"
         >
-          <template v-slot:append v-if="lightingMode == 'Solid'">
+          <template v-slot:append v-if="lightingMode == 'Static'">
             <q-icon
               @click.stop
               name="colorize"
@@ -73,7 +53,24 @@
         </q-select>
       </q-card-section>
 
-      -->
+      <q-card-section>
+        <div class="text-h6">Effect Speed</div>
+      </q-card-section>
+
+      <q-card-section class="q-pt-none row justify-around items-center">
+        <q-icon name="remove" style="font-size: 19px" />
+        <q-slider
+          color="black"
+          style="width: 75% !important"
+          v-model="store.raw.effectSpeed"
+          :min="0"
+          :max="255"
+          label
+          @change="store._updateLedConfig()"
+        />
+        <q-icon name="add" style="font-size: 25px" />
+      </q-card-section>
+
     </q-card>
     <q-card style="margin: 2vw" bordered class="my-card">
       <q-card-section class="row justify-between">
@@ -113,6 +110,7 @@
 <script>
 import { useQuasar } from "quasar";
 import { useMainStore } from "src/stores/main";
+import { toRaw } from 'vue';
 
 export default {
   name: "ControlPage",
@@ -122,14 +120,13 @@ export default {
       patterns: [],
       playlists: [],
       solidcolor: "",
-      speed: 7,
       lightingMode: null,
     };
   },
   methods: {
     stop() {
       this.store.stop();
-      useQuasar().notify({
+      this.quasar.notify({
         type: "warning",
         message: "Robot halted",
       });
@@ -158,35 +155,22 @@ export default {
     },
     home() {
       this.store.exec("G28");
-      useQuasar().notify({
+      this.quasar.notify({
         type: "positive",
         message: "Robot is now homing",
       });
     },
     reset() {
       this.store.reset();
-      useQuasar().notify({
+      this.quasar.notify({
         type: "negative",
         message: "Robot reset",
       });
-    },
+    }
   },
-  mounted: function () {
-    /*
-    this.speed = this.$root.status.rpm;
-    this.lightingMode =
-      this.$root.wledStatus.effects[this.$root.wledStatus.state.seg[0].fx];
-    this.solidcolor = this.rgbToHex(
-      this.$root.wledStatus.state.seg[0].col[0][0],
-      this.$root.wledStatus.state.seg[0].col[0][1],
-      this.$root.wledStatus.state.seg[0].col[0][2]
-    );
-
-    */
-
-    this.speed = 10;
-    this.lightingMode = 5;
-    this.solidcolor = "#FF00FF";
+  mounted() {
+    this.solidcolor = this.rgbToHex(this.store.raw.redVal, this.store.raw.greenVal, this.store.raw.blueVal);
+    this.lightingMode = this.store.effectArray[this.store.raw.effectID];
   },
   watch: {
     solidcolor: function (val) {
@@ -197,14 +181,16 @@ export default {
       this.store.setColor(newR, newG, newB);
     },
     lightingMode: function (val) {
-      this.store.setEffect(val);
+      this.store.setEffect(this.store.effectArray.indexOf(val));
     },
   },
   setup() {
     const store = useMainStore();
+    const quasar = useQuasar();
 
     return {
       store,
+      quasar,
     };
   },
 };

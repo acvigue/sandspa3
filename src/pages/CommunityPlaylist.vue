@@ -32,7 +32,7 @@
           </q-inner-loading>
           <q-item-section avatar>
             <img
-              style="height: 75px;"
+              style="height: 75px"
               :src="
                 'https://webcenter.sisyphus-industries.com/' +
                 pattern.large_photo
@@ -109,7 +109,7 @@ export default {
   },
   methods: {
     downloadPlaylist: async function () {
-      useQuasar().loading.show({
+      this.quasar.loading.show({
         delay: 400, // ms
       });
 
@@ -151,20 +151,21 @@ export default {
 
       console.log(seqFile);
 
-      useQuasar().loading.hide();
+      this.quasar.loading.hide();
     },
     downloadPattern: async function (pattern) {
       pattern.is_downloading = true;
 
       //Get pattern data from Webcenter
       const ptData = (
-        await this.$axios.get(
+        await this.$axios.post(
           "https://webcenter.sisyphus-industries.com/tracks/" +
             pattern.track_id +
-            "/download.json",
+            "/download",
+          "pi_id=00000000dad7f8cc&mac_address=",
           { headers: { Authorization: this.store } }
         )
-      ).data.resp;
+      ).data;
       var formData = new FormData();
       var blob = new Blob([ptData], { type: "text/plain" });
       formData.append(
@@ -256,6 +257,7 @@ export default {
   },
   setup() {
     const store = useMainStore();
+    const quasar = useQuasar();
 
     return { store };
   },
