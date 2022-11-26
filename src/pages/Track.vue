@@ -10,7 +10,7 @@
           @click="$router.go(-1)"
         />
         <q-toolbar-title class="text-center">{{
-          $route.params.name.split("-")[1].replace(".thr", "")
+          track.name
         }}</q-toolbar-title>
         <q-btn flat round class="q-mr-sm" />
       </q-toolbar>
@@ -19,11 +19,9 @@
     <div class="row justify-center">
       <div class="track__data">
         <img
-          width="100%"
+          style="width: 100%;"
           :src="
-            'https://webcenter.sisyphus-industries.com/uploads/track/thr/' +
-            $route.params.name.split('-')[0].replace('sd/', '') +
-            '/thumb_400.png'
+            `https://webcenter.sisyphus-industries.com/uploads/track/thr/${track.track_id}/thumb_400.png`
           "
         />
         <div class="row justify-around" style="margin-top: 12vh">
@@ -33,7 +31,7 @@
             icon="play_arrow"
             size="xl"
             class="q-mr-sm"
-            @click="store.play('/sd/' + $route.params.name)"
+            @click="store.play(`/sd/${track.id}.thr`)"
           />
           <q-btn
             flat
@@ -49,7 +47,7 @@
             icon="delete"
             size="xl"
             class="q-mr-sm"
-            @click="store.delete('/sd/' + $route.params.name)"
+            @click="deleteThisTrack()"
           />
         </div>
       </div>
@@ -72,6 +70,7 @@
 
 <script>
 import { useMainStore } from "src/stores/main";
+import { useFilesStore } from "src/stores/files";
 import { useQuasar } from "quasar";
 
 export default {
@@ -79,23 +78,40 @@ export default {
   components: {},
   data: function () {
     return {
-      patterns: [],
+      track: {}
     };
   },
-  methods: {
-    getTrackMetadata: async function (done) {
-      done();
-    },
-  },
   mounted: function () {
-    this.refreshFiles();
+    this.track = this.files.tracks.find((trackobj) => trackobj.id === this.$route.params.id)
+  },
+  methods: {
+    async deleteThisTrack() {
+      this.quasar.loading.show({
+        delay: 100, // ms
+      });
+
+      this.files.tracks.splice(this.files.tracks.indexOf(this.track), 1);
+      await this.files.saveManifest();
+
+      await this.store.delete(`/sd/${track.id}.thr`);
+
+      this.quasar.loading.hide();
+      this.quasar.notify({
+        type: "positive",
+        message: "Deleted",
+      });
+
+      $router.go(-1);
+    }
   },
   setup() {
     const store = useMainStore();
+    const files = useFilesStore();
     const quasar = useQuasar();
 
     return {
       store,
+      files,
       quasar,
     };
   },
