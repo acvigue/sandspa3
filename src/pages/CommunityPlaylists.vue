@@ -17,7 +17,13 @@
 
     <q-infinite-scroll @load="loadMoreTracks" :offset="250">
       <q-list bordered separator>
-        <q-item v-for="pattern in patterns" :key="pattern.id">
+        <q-item
+          clickable
+          v-ripple
+          @click="openPlaylist(pattern.playlist_id)"
+          v-for="pattern in patterns"
+          :key="pattern.id"
+        >
           <q-inner-loading :showing="pattern.is_downloading">
             <q-spinner size="50px" color="black" />
           </q-inner-loading>
@@ -44,7 +50,7 @@
           </q-item-section>
           <q-item-section avatar>
             <q-btn
-              @click="downloadPattern(pattern)"
+              @click.stop="downloadPattern(pattern)"
               v-if="!pattern.is_downloaded && !pattern.is_downloading"
               round
               flat
@@ -54,6 +60,7 @@
               icon="get_app"
             />
             <q-btn
+              @click.stop="function() {}"
               v-if="pattern.is_downloaded"
               round
               flat
@@ -85,6 +92,7 @@
 
 <script>
 import { useMainStore } from "src/stores/main";
+import { useFilesStore } from "src/stores/files";
 import { useQuasar } from "quasar";
 
 export default {
@@ -100,32 +108,9 @@ export default {
   methods: {
     downloadPattern: async function (pattern) {
       pattern.is_downloading = true;
-      //Get pattern data from Webcenter
-      const ptData = (
-        await this.$axios.post(
-          "https://webcenter.sisyphus-industries.com/tracks/" +
-            pattern.playlist_id +
-            "/download",
-          "pi_id=00000000dad7f8cc&mac_address=",
-          { headers: { Authorization: this.store } }
-        )
-      ).data;
-      var formData = new FormData();
-      var blob = new Blob([ptData], { type: "text/plain" });
-      formData.append(
-        "file",
-        blob,
-        pattern.playlist_id + "-" + pattern.name.replace(/-/g, "") + ".thr"
-      );
-      await this.$axios.post(
-        this.store.tableBaseURL + "/uploadtofileman",
-        formData,
-        {
-          headers: {
-            "Content-Type": "multipart/form-data",
-          },
-        }
-      );
+
+      await this.files.addPlaylist(pattern);
+
       pattern.is_downloading = false;
       pattern.is_downloaded = true;
     },
@@ -143,63 +128,50 @@ export default {
     openPlaylist: function (pname) {
       this.$router.push("/community/playlist/" + pname);
     },
-    refreshFiles: async function (done) {
-      if (this.store.secure.webcenterToken == "") {
-        //Log in to Webcenter
-        await this.store.loginToWebCenter();
-      }
-
-      //Get all files on bot
-      await this.$axios
-        .get(this.store.tableBaseURL + "/filelist")
-        .then((response) => {
-          response.data.files.forEach((file) => {
-            if (file.name.includes(".seq") || file.name.includes(".SEQ")) {
-              //thr
-              this.existingPatterns.push(file.name.split("-")[0]);
-            }
-          });
-        });
-
-      //Get popular tracks
-      await this.$axios
-        .get(
-          "https://webcenter.sisyphus-industries.com/playlists.json?is_featured=false",
-          { headers: { Authorization: this.store.secure.webcenterToken } }
-        )
-        .then((response) => {
-          const tracks = response.data.resp;
-          tracks.forEach((track) => {
-            track.is_downloading = false;
-            track.is_downloaded = false;
-            if (this.existingPatterns.includes(track.id)) {
-              track.is_downloaded = true;
-            }
-            this.allPatterns.push(track);
-          });
-        });
-
-      //load first ten patterns into list
-      let i = 0;
-      this.allPatterns.forEach((pattern) => {
-        i++;
-        if (i < 10) {
-          this.allPatterns.shift();
-          this.patterns.push(pattern);
-        }
-      });
-      done();
-    },
   },
-  mounted: function () {
-    this.refreshFiles();
+  async mounted() {
+    this.quasar.loading.show({ delay: 400 });
+    if (this.store.secure.webcenterToken == "") {
+      //Log in to Webcenter
+      await this.store.loginToWebCenter();
+    }
+
+    //Get popular tracks
+    await this.$axios
+      .get(
+        "https://webcenter.sisyphus-industries.com/playlists.json?is_featured=false",
+        { headers: { Authorization: this.store.secure.webcenterToken } }
+      )
+      .then((response) => {
+        const tracks = response.data.resp;
+        tracks.forEach((track) => {
+          track.is_downloading = false;
+          track.is_downloaded =
+            this.files.playlists.find((trackobj) => trackobj.id === track.id) !=
+            undefined;
+          this.allPatterns.push(track);
+        });
+      });
+
+    //load first ten patterns into list
+    let i = 0;
+    this.allPatterns.forEach((pattern) => {
+      i++;
+      if (i < 10) {
+        this.allPatterns.shift();
+        this.patterns.push(pattern);
+      }
+    });
+    this.quasar.loading.hide();
   },
   setup() {
     const store = useMainStore();
+    const files = useFilesStore();
     const quasar = useQuasar();
 
     return {
       store,
+      files,
       quasar,
     };
   },

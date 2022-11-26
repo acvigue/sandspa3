@@ -19,7 +19,7 @@
     "vue": "^3.0.0",
     "vue-router": "^4.0.0",
     "vue-sse": "^2.5.2",
-    "vuedraggable": "^2.24.3"
+    "vuedraggable": "^4.1.0"
   },
   "devDependencies": {
     "@babel/eslint-parser": "^7.13.14",

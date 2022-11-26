@@ -12,20 +12,20 @@
         />
         <q-toolbar-title
           class="text-center"
-          v-if="$route.params.name == 'All Tracks.seq'"
-          >{{ $route.params.name.replace(".seq", "") }}</q-toolbar-title
+          v-if="allTrackMode"
+          >All Tracks</q-toolbar-title
         >
         <q-toolbar-title
           @click="renameAction()"
           class="text-center"
-          v-if="$route.params.name != 'All Tracks.seq'"
+          v-else
           >{{
-            $route.params.name.split("-")[1].replace(".seq", "")
+            playlist.name
           }}</q-toolbar-title
         >
         <q-btn
           @click="editing = !editing"
-          v-if="$route.params.name != 'All Tracks.seq' && editing == false"
+          v-if="!allTrackMode && editing == false"
           flat
           round
           dense
@@ -37,7 +37,7 @@
             editing = !editing;
             saveEdits();
           "
-          v-if="$route.params.name != 'All Tracks.seq' && editing == true"
+          v-if="!allTrackMode && editing == true"
           flat
           round
           dense
@@ -45,14 +45,14 @@
           class="q-mr-sm"
         />
         <q-btn
-          v-if="$route.params.name == 'All Tracks.seq'"
+          v-if="allTrackMode"
           flat
           round
           class="q-mr-sm"
         />
       </q-toolbar>
       <q-toolbar
-        v-if="$route.params.name != 'All Tracks.seq'"
+        v-if="!allTrackMode"
         style="padding-top: 0; min-height: 25px"
         class="justify-center"
       >
@@ -63,7 +63,7 @@
           color="white"
           flat
           icon="play_arrow"
-          @click="store.play('/sd/' + $route.params.name)"
+          @click="store.play(`/sd/${playlist.id}.seq`)"
         />
         <q-btn
           v-if="editing == true"
@@ -73,8 +73,7 @@
           flat
           icon="delete"
           @click="
-            store.delete('/sd/' + $route.params.name);
-            $router.go(-1);
+            deleteThisPlaylist();
           "
         />
       </q-toolbar>
@@ -103,34 +102,33 @@
       </q-card>
     </q-dialog>
 
-    <q-list bordered separator v-if="loaded">
-      <draggable v-bind="dragOptions" v-model="patterns">
-        <q-item
+    <q-list bordered separator>
+      <draggable v-model="tracks" :disabled="!editing" item-key="id">
+        <template #item="{element}">
+          <q-item
           style="border-bottom: 1px solid #ccc"
           clickable
           v-ripple
-          v-for="(pattern, i) in patterns"
-          :key="pattern.id"
-          @click.stop="openTrack(pattern.name)"
+          @click.stop="openTrack(element.id)"
         >
           <q-item-section avatar>
             <img
-              height="100px"
+              style="height: 100px;"
               :src="
                 'https://webcenter.sisyphus-industries.com/uploads/track/thr/' +
-                pattern.name.split('-')[0].replace('sd/', '') +
+                element.track_id +
                 '/thumb_400.png'
               "
             />
           </q-item-section>
           <q-item-section>
             <q-item-label class="home__item-title">{{
-              pattern.name.split("-")[1].replace(".THR", "").replace(".thr", "")
+              element.name
             }}</q-item-label>
           </q-item-section>
           <q-item-section avatar>
             <q-btn
-              @click.stop="patterns.splice(i, 1)"
+              @click.stop="tracks.splice(i, 1)"
               v-if="editing == true"
               round
               flat
@@ -141,6 +139,7 @@
             />
           </q-item-section>
         </q-item>
+        </template>
       </draggable>
     </q-list>
   </div>
@@ -151,6 +150,8 @@ import draggable from "vuedraggable";
 import { useQuasar } from "quasar";
 import { useMainStore } from "src/stores/main";
 import { store } from "quasar/wrappers";
+import { useFilesStore } from "src/stores/files";
+import { toRaw } from "vue";
 
 export default {
   name: "PlaylistPage",
@@ -159,21 +160,13 @@ export default {
   },
   data: function () {
     return {
-      patterns: [],
-      loaded: false,
+      tracks: [],
       editing: false,
       renameprompt: false,
       name: "",
+      playlist: {},
+      allTrackMode: false
     };
-  },
-  computed: {
-    dragOptions() {
-      return {
-        animation: 0,
-        disabled: !this.editing,
-        ghostClass: "ghost",
-      };
-    },
   },
   methods: {
     renameAction: function () {
@@ -181,43 +174,43 @@ export default {
         this.renameprompt = true;
       }
     },
+    async deleteThisPlaylist() {
+      this.quasar.loading.show({
+        delay: 100, // ms
+      });
+
+      this.files.playlists.splice(this.files.playlists.indexOf(this.playlist), 1);
+      await this.files.saveManifest();
+
+      await this.store.delete(`/sd/${playlist.id}.seq`);
+
+      this.quasar.loading.hide();
+      this.quasar.notify({
+        type: "positive",
+        message: "Deleted",
+      });
+
+      $router.go(-1);
+    },
     renamePlaylist: async function () {
       this.quasar.loading.show({
         delay: 100, // ms
       });
 
-      await this.store.delete("/sd/" + this.$route.params.name);
-      let playlistFile = "";
-      this.patterns.forEach((pattern) => {
-        playlistFile += pattern.name + "\n";
-      });
+      this.files.playlists[this.files.playlists.indexOf(this.playlist)].name = this.name;
 
-      var formData = new FormData();
-      var blob = new Blob([playlistFile], { type: "text/plain" });
-      formData.append(
-        "file",
-        blob,
-        this.$route.params.name.split("-")[0] +
-          "-" +
-          this.name.replace(/-/g, "") +
-          ".seq"
-      );
-      await axios.post(this.store.tableBaseURL + "/uploadtofileman", formData, {
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
-      });
+      await this.files.saveManifest();
 
       this.quasar.loading.hide();
       this.$router.go(-1);
       this.quasar.notify({
         type: "positive",
-        message: "Playlist renamed",
+        message: "Renamed",
       });
     },
-    openTrack: function (pname) {
+    openTrack: function (id) {
       if (this.editing == false) {
-        this.$router.push("/library/track/" + pname);
+        this.$router.push("/library/track/" + id);
       }
     },
     saveEdits: async function () {
@@ -225,73 +218,50 @@ export default {
         delay: 100, // ms
       });
       let playlistFile = "";
-      this.patterns.forEach((pattern) => {
-        playlistFile += pattern.name + "\n";
+      this.tracks.forEach((pattern) => {
+        playlistFile += pattern.id + ".thr\n";
       });
+
+      this.files.playlists[this.files.playlists.indexOf(this.playlist)].tracks = this.tracks;
 
       var formData = new FormData();
       var blob = new Blob([playlistFile], { type: "text/plain" });
-      formData.append("file", blob, this.$route.params.name);
-      await axios.post(this.store.tableBaseURL + "/uploadtofileman", formData, {
+      formData.append("file", blob, `${this.$route.params.id}.seq`);
+      await this.$axios.post(this.store.tableBaseURL + "/uploadtofileman", formData, {
         headers: {
           "Content-Type": "multipart/form-data",
         },
       });
+
+      await this.files.saveManifest();
+
       this.quasar.loading.hide();
       this.quasar.notify({
         type: "positive",
-        message: "Playlist saved",
+        message: "Saved",
       });
-    },
-    refreshFiles: async function (done) {
-      if (this.store.secure.webcenterToken == "") {
-        //Log in to Webcenter
-        await store.loginToWebCenter();
-      }
-
-      this.patterns = [];
-      if (this.$route.params.name != "All Tracks.seq") {
-        await axios
-          .get(this.store.tableBaseURL + "/files/sd/" + this.$route.params.name)
-          .then((response) => {
-            const ptrns = response.data.split("\n");
-            ptrns.forEach((file) => {
-              if (file != "") {
-                this.patterns.push({ name: file, size: 1234 });
-              }
-            });
-          });
-      } else {
-        await axios
-          .get(this.store.tableBaseURL + "/filelist")
-          .then(async (response) => {
-            response.data.files.forEach(async (file) => {
-              if (file.name.includes(".THR") || file.name.includes(".thr")) {
-                this.patterns.push(file);
-              }
-            });
-          });
-      }
-      done();
-    },
-  },
-  mounted: async function () {
-    if (this.$route.params.name != "All Tracks.seq") {
-      this.name = this.$route.params.name.split("-")[1].replace(".seq", "");
     }
-    this.quasar.loading.show({
-      delay: 100, // ms
-    });
-    await this.refreshFiles(function () {});
-    this.quasar.loading.hide();
+  },
+  async mounted() {
+    if (this.$route.params.id == "all_tracks") {
+      this.allTrackMode = true;
+    } else {
+      this.playlist = this.files.playlists.find((trackobj) => trackobj.id === this.$route.params.id);
+      
+      this.playlist.tracks.forEach((v, i) => {
+        this.tracks.push(this.files.tracks.find((trackobj) => trackobj.id == v.id));
+      })
+    }
     this.loaded = true;
   },
   setup() {
     const store = useMainStore();
+    const files = useFilesStore();
     const quasar = useQuasar();
 
     return {
       store,
+      files,
       quasar,
     };
   },

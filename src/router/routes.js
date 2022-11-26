@@ -10,12 +10,12 @@ const routes = [
     component: () => import("pages/Library.vue"),
   },
   {
-    path: "/library/playlist/:name",
+    path: "/library/playlist/:id",
     name: "Playlist",
     component: () => import("pages/Playlist.vue"),
   },
   {
-    path: "/library/track/:name",
+    path: "/library/track/:id",
     name: "Track",
     component: () => import("pages/Track.vue"),
   },
@@ -30,7 +30,12 @@ const routes = [
     component: () => import("pages/CommunityItemList.vue"),
   },
   {
-    path: "/community/playlist/:name/:id",
+    path: "/community/playlists",
+    name: "CommunityPlaylists",
+    component: () => import("pages/CommunityPlaylists.vue"),
+  },
+  {
+    path: "/community/playlist/:id",
     name: "CommunityPlaylist",
     component: () => import("pages/CommunityPlaylist.vue"),
   },

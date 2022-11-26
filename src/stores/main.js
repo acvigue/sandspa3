@@ -27,64 +27,64 @@ export const useMainStore = defineStore("main", {
       webcenterToken: "",
     },
     effectArray: [
-      'Static',
-      'Blink',
-      'Breath',
-      'Color Wipe',
-      'Color Wipe Inverse',
-      'Color Wipe Reverse',
-      'Color Wipe Reverse Inverse',
-      'Color Wipe Random',
-      'Random Color',
-      'Single Dynamic',
-      'Multi Dynamic',
-      'Rainbow',
-      'Rainbow Cycle',
-      'Scan',
-      'Dual Scan',
-      'Fade',
-      'Theater Chase',
-      'Theater Chase Rainbow',
-      'Running Lights',
-      'Twinkle',
-      'Twinkle Random',
-      'Twinkle Fade',
-      'Twinkle Fade Random',
-      'Sparkle',
-      'Flash Sparkle',
-      'Hyper Sparkle',
-      'Strobe',
-      'Strobe Rainbow',
-      'Multi Strobe',
-      'Blink Rainbow',
-      'Chase White',
-      'Chase Color',
-      'Chase Random',
-      'Chase Rainbow',
-      'Chase Flash',
-      'Chase Flash Random',
-      'Chase Rainbow White',
-      'Chase Blackout',
-      'Chase Blackout Rainbow',
-      'Color Sweep Random',
-      'Running Color',
-      'Running Red Blue',
-      'Running Random',
-      'Larson Scanner',
-      'Comet',
-      'Fireworks',
-      'Fireworks Random',
-      'Merry Christmas',
-      'Fire Flicker',
-      'Fire Flicker (soft)',
-      'Fire Flicker (intense)',
-      'Circus Combustus',
-      'Halloween',
-      'Bicolor Chase',
-      'Tricolor Chase',
-      'TwinkleFOX',
-      'Custom'
-    ]
+      "Static",
+      "Blink",
+      "Breath",
+      "Color Wipe",
+      "Color Wipe Inverse",
+      "Color Wipe Reverse",
+      "Color Wipe Reverse Inverse",
+      "Color Wipe Random",
+      "Random Color",
+      "Single Dynamic",
+      "Multi Dynamic",
+      "Rainbow",
+      "Rainbow Cycle",
+      "Scan",
+      "Dual Scan",
+      "Fade",
+      "Theater Chase",
+      "Theater Chase Rainbow",
+      "Running Lights",
+      "Twinkle",
+      "Twinkle Random",
+      "Twinkle Fade",
+      "Twinkle Fade Random",
+      "Sparkle",
+      "Flash Sparkle",
+      "Hyper Sparkle",
+      "Strobe",
+      "Strobe Rainbow",
+      "Multi Strobe",
+      "Blink Rainbow",
+      "Chase White",
+      "Chase Color",
+      "Chase Random",
+      "Chase Rainbow",
+      "Chase Flash",
+      "Chase Flash Random",
+      "Chase Rainbow White",
+      "Chase Blackout",
+      "Chase Blackout Rainbow",
+      "Color Sweep Random",
+      "Running Color",
+      "Running Red Blue",
+      "Running Random",
+      "Larson Scanner",
+      "Comet",
+      "Fireworks",
+      "Fireworks Random",
+      "Merry Christmas",
+      "Fire Flicker",
+      "Fire Flicker (soft)",
+      "Fire Flicker (intense)",
+      "Circus Combustus",
+      "Halloween",
+      "Bicolor Chase",
+      "Tricolor Chase",
+      "TwinkleFOX",
+      "Custom",
+    ],
   }),
 
   getters: {
@@ -171,7 +171,7 @@ export const useMainStore = defineStore("main", {
     },
 
     async setBrightness(number) {
-      if(this.raw.ledBrightness != number) {
+      if (this.raw.ledBrightness != number) {
         console.log(`setting brightness to ${number}`);
         this.raw.ledBrightness = number;
         await this._updateLedConfig();
@@ -179,7 +179,7 @@ export const useMainStore = defineStore("main", {
     },
 
     async setAutoDim(enabled) {
-      if(this.raw.autoDim != enabled) {
+      if (this.raw.autoDim != enabled) {
         console.log(`setting autodim to ${enabled}`);
         this.raw.autoDim = enabled;
         await this._updateLedConfig();
@@ -187,8 +187,11 @@ export const useMainStore = defineStore("main", {
     },
 
     async setColor(red, green, blue) {
-
-      if(this.raw.redVal != red || this.raw.greenVal != green || this.raw.blueVal != blue) {
+      if (
+        this.raw.redVal != red ||
+        this.raw.greenVal != green ||
+        this.raw.blueVal != blue
+      ) {
         console.log(`setting color to ${red},${green},${blue}`);
         this.raw.redVal = red;
         this.raw.greenVal = green;
@@ -198,7 +201,7 @@ export const useMainStore = defineStore("main", {
     },
 
     async setEffect(id) {
-      if(this.raw.effectID != id) {
+      if (this.raw.effectID != id) {
         console.log(`setting effect to ${id}`);
         this.raw.effectID = id;
         await this._updateLedConfig();
@@ -206,7 +209,7 @@ export const useMainStore = defineStore("main", {
     },
 
     async setSpeed(number) {
-      if(this.raw.effectSpeed != number) {
+      if (this.raw.effectSpeed != number) {
         console.log(`setting effect speed to ${number}`);
         this.raw.effectSpeed = number;
         await this._updateLedConfig();
@@ -242,14 +245,14 @@ export const useMainStore = defineStore("main", {
         blueVal: this.raw.blueVal,
         effectID: this.raw.effectID,
         effectSpeed: this.raw.effectSpeed,
-        autoDim: this.raw.autoDim
-      }
+        autoDim: this.raw.autoDim,
+      };
 
       await axios.post(`${this.tableBaseURL}/setled`, JSON.stringify(config), {
         headers: {
-          "Content-Type": "text/plain"
-        }
+          "Content-Type": "text/plain",
+        },
       });
-    }
+    },
   },
 });

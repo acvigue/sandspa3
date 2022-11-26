@@ -11,115 +11,98 @@
       </q-toolbar>
     </q-header>
 
-    <q-pull-to-refresh color="white" bg-color="black" @refresh="refreshFiles">
+    <q-pull-to-refresh color="white" bg-color="black" @refresh="refreshFiles()">
       <q-list v-if="loaded" bordered separator>
+        <q-item clickable v-ripple @click="openPlaylist('all_tracks')">
+          <q-item-section avatar class="col">
+            <div class="row" style="padding-bottom: 5px">
+              <img
+                style="padding-right: 5px; border-radius: 30px; height: 60px"
+                :src="`https://webcenter.sisyphus-industries.com/uploads/track/thr/${
+                  files.tracks[0]?.track_id ?? 3113
+                }/thumb_400.png`"
+              />
+              <img
+                style="border-radius: 30px; height: 60px"
+                :src="`https://webcenter.sisyphus-industries.com/uploads/track/thr/${
+                  files.tracks[1]?.track_id ?? 3113
+                }/thumb_400.png`"
+              />
+            </div>
+            <div class="row">
+              <img
+                style="padding-right: 5px; border-radius: 30px; height: 60px"
+                :src="`https://webcenter.sisyphus-industries.com/uploads/track/thr/${
+                  files.tracks[2]?.track_id ?? 3113
+                }/thumb_400.png`"
+              />
+              <img
+                style="border-radius: 30px; height: 60px"
+                :src="`https://webcenter.sisyphus-industries.com/uploads/track/thr/${
+                  files.tracks[3]?.track_id ?? 3113
+                }/thumb_400.png`"
+              />
+            </div>
+          </q-item-section>
+          <q-item-section>
+            <q-item-label class="home__item-title" overline
+              >All Tracks</q-item-label
+            >
+            <q-item-label class="home__item-subtitle"
+              >{{ files.tracks.length }} tracks</q-item-label
+            >
+          </q-item-section>
+          <q-item-section avatar>
+            <q-icon
+              style="font-size: 40px"
+              color="black"
+              name="navigate_next"
+            />
+          </q-item-section>
+        </q-item>
         <q-item
           clickable
           v-ripple
           v-for="playlist in files.playlists"
           :key="playlist.name"
-          @click="openPlaylist(playlist.name)"
+          @click="openPlaylist(playlist.id)"
         >
-          <q-item-section
-            avatar
-            class="col"
-            v-if="playlist.name == 'All Tracks.seq'"
-          >
+          <q-item-section avatar class="col">
             <div class="row" style="padding-bottom: 5px">
               <img
-                height="60px"
-                style="padding-right: 5px; border-radius: 30px"
-                :src="
-                  'https://webcenter.sisyphus-industries.com/uploads/track/thr/' +
-                  patterns[0].name.split('-')[0] +
-                  '/thumb_400.png'
-                "
+                style="padding-right: 5px; border-radius: 30px; height: 60px"
+                :src="`https://webcenter.sisyphus-industries.com/uploads/track/thr/${
+                  playlist.db_tracks[0] ?? 3113
+                }/thumb_400.png`"
               />
               <img
-                height="60px"
-                style="border-radius: 30px"
-                :src="
-                  'https://webcenter.sisyphus-industries.com/uploads/track/thr/' +
-                  patterns[1].name.split('-')[0] +
-                  '/thumb_400.png'
-                "
+                style="border-radius: 30px; height: 60px"
+                :src="`https://webcenter.sisyphus-industries.com/uploads/track/thr/${
+                  playlist.db_tracks[1] ?? 3113
+                }/thumb_400.png`"
               />
             </div>
             <div class="row">
               <img
-                height="60px"
-                style="padding-right: 5px; border-radius: 30px"
-                :src="
-                  'https://webcenter.sisyphus-industries.com/uploads/track/thr/' +
-                  patterns[2].name.split('-')[0] +
-                  '/thumb_400.png'
-                "
+                style="padding-right: 5px; border-radius: 30px; height: 60px"
+                :src="`https://webcenter.sisyphus-industries.com/uploads/track/thr/${
+                  playlist.db_tracks[2] ?? 3113
+                }/thumb_400.png`"
               />
               <img
-                height="60px"
-                style="border-radius: 30px"
-                :src="
-                  'https://webcenter.sisyphus-industries.com/uploads/track/thr/' +
-                  patterns[3].name.split('-')[0] +
-                  '/thumb_400.png'
-                "
-              />
-            </div>
-          </q-item-section>
-          <q-item-section
-            avatar
-            class="col"
-            v-if="playlist.name != 'All Tracks.seq'"
-          >
-            <div class="row" style="padding-bottom: 5px">
-              <img
-                height="60px"
-                style="padding-right: 5px; border-radius: 30px"
-                :src="playlist.preview[0]"
-              />
-              <img
-                height="60px"
-                style="border-radius: 30px"
-                :src="playlist.preview[1]"
-              />
-            </div>
-            <div class="row">
-              <img
-                height="60px"
-                style="padding-right: 5px; border-radius: 30px"
-                :src="playlist.preview[2]"
-              />
-              <img
-                height="60px"
-                style="border-radius: 30px"
-                :src="playlist.preview[3]"
+                style="border-radius: 30px; height: 60px"
+                :src="`https://webcenter.sisyphus-industries.com/uploads/track/thr/${
+                  playlist.db_tracks[3] ?? 3113
+                }/thumb_400.png`"
               />
             </div>
           </q-item-section>
           <q-item-section>
-            <q-item-label
-              class="home__item-title"
-              v-if="playlist.name == 'All Tracks.seq'"
-              overline
-              >{{ playlist.name.replace(".seq", "") }}</q-item-label
-            >
-            <q-item-label
-              class="home__item-title"
-              v-if="playlist.name != 'All Tracks.seq'"
-              overline
-              >{{
-                playlist.name.split("-")[1].replace(".seq", "")
-              }}</q-item-label
-            >
-            <q-item-label
-              class="home__item-subtitle"
-              v-if="playlist.name != 'All Tracks.seq'"
-              >{{ playlist.itemCount }} tracks</q-item-label
-            >
-            <q-item-label
-              class="home__item-subtitle"
-              v-if="playlist.name == 'All Tracks.seq'"
-              >{{ patterns.length }} tracks</q-item-label
+            <q-item-label class="home__item-title" overline>{{
+              playlist.name
+            }}</q-item-label>
+            <q-item-label class="home__item-subtitle"
+              >{{ playlist.tracks.length }} tracks</q-item-label
             >
           </q-item-section>
           <q-item-section avatar>
@@ -165,9 +148,7 @@ export default {
   components: {},
   data: function () {
     return {
-      patterns: [],
-      playlists: [],
-      loaded: false,
+      loaded: true,
     };
   },
   methods: {
@@ -198,70 +179,8 @@ export default {
         type: "positive",
         message: "Playlist created",
       });
-      this.refreshFiles();
+      this.files.refreshFiles();
     },
-    refreshFiles: async function (done) {
-      await this.$axios
-        .get(this.store.tableBaseURL + "/filelist")
-        .then((response) => {
-          this.patterns = [];
-          this.playlists = [];
-          response.data.files.forEach((file) => {
-            if (file.name.includes(".thr")) {
-              //thr
-              this.patterns.push(file);
-            } else if (file.name.includes(".seq")) {
-              //sequence / playlist
-              this.$axios
-                .get(this.store.tableBaseURL + "/files/sd/" + file.name)
-                .then((response) => {
-                  const lines = response.data.split("\n");
-                  file.itemCount = lines.length;
-                  file.preview = [
-                    "/images.png",
-                    "/images.png",
-                    "/images.png",
-                    "/images.png",
-                  ];
-                  try {
-                    file.preview[0] =
-                      "https://webcenter.sisyphus-industries.com/uploads/track/thr/" +
-                      lines[0].split("-")[0] +
-                      "/thumb_400.png";
-                  } catch (e) {}
-                  try {
-                    file.preview[1] =
-                      "https://webcenter.sisyphus-industries.com/uploads/track/thr/" +
-                      lines[1].split("-")[0] +
-                      "/thumb_400.png";
-                  } catch (e) {}
-                  try {
-                    file.preview[2] =
-                      "https://webcenter.sisyphus-industries.com/uploads/track/thr/" +
-                      lines[2].split("-")[0] +
-                      "/thumb_400.png";
-                  } catch (e) {}
-                  try {
-                    file.preview[3] =
-                      "https://webcenter.sisyphus-industries.com/uploads/track/thr/" +
-                      lines[3].split("-")[0] +
-                      "/thumb_400.png";
-                  } catch (e) {}
-                  this.playlists.push(file);
-                });
-            }
-          });
-        });
-      this.playlists.push({ name: "All Tracks.seq" });
-    },
-  },
-  mounted: async function () {
-    this.quasar.loading.show({
-      delay: 100, // ms
-    });
-    await this.refreshFiles(function () {});
-    this.quasar.loading.hide();
-    this.loaded = true;
   },
   setup() {
     const store = useMainStore();

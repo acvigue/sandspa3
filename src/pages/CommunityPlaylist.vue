@@ -11,49 +11,41 @@
           @click="$router.go(-1)"
         />
         <q-toolbar-title class="text-center">{{
-          $route.params.name
+          playlist.name
         }}</q-toolbar-title>
-        <q-btn
-          flat
-          round
-          dense
-          icon="get_app"
-          class="q-mr-sm"
-          @click="downloadPlaylist()"
-        />
+        <q-btn flat round dense class="q-mr-sm" />
       </q-toolbar>
     </q-header>
 
-    <q-infinite-scroll @load="loadMoreTracks" :offset="250">
+    <q-infinite-scroll @load="function () {}" :offset="250">
       <q-list bordered separator>
-        <q-item v-for="pattern in patterns" :key="pattern.id">
-          <q-inner-loading :showing="pattern.is_downloading">
+        <q-item v-for="track in tracks" :key="track.id">
+          <q-inner-loading :showing="track.is_downloading">
             <q-spinner size="50px" color="black" />
           </q-inner-loading>
           <q-item-section avatar>
             <img
               style="height: 75px"
               :src="
-                'https://webcenter.sisyphus-industries.com/' +
-                pattern.large_photo
+                'https://webcenter.sisyphus-industries.com/' + track.large_photo
               "
             />
           </q-item-section>
           <q-item-section>
             <q-item-label class="home__item-title">{{
-              pattern.name
+              track.name
             }}</q-item-label>
             <q-item-label class="home__item-title text-grey-7"
-              >by {{ pattern.created_by_name }}</q-item-label
+              >by {{ track.created_by_name }}</q-item-label
             >
             <q-item-label class="home__item-title text-grey-7"
-              >{{ pattern.download_count }} downloads</q-item-label
+              >{{ track.download_count }} downloads</q-item-label
             >
           </q-item-section>
           <q-item-section avatar>
             <q-btn
-              @click="downloadPattern(pattern)"
-              v-if="!pattern.is_downloaded && !pattern.is_downloading"
+              @click.stop="downloadPattern(track)"
+              v-if="!track.is_downloaded && !track.is_downloading"
               round
               flat
               color="white"
@@ -62,7 +54,8 @@
               icon="get_app"
             />
             <q-btn
-              v-if="pattern.is_downloaded"
+              v-if="track.is_downloaded"
+              @click.stop="function() {}"
               round
               flat
               color="white"
@@ -94,6 +87,7 @@
 <script>
 import { useMainStore } from "src/stores/main";
 import { useQuasar } from "quasar";
+import { useFilesStore } from "src/stores/files";
 
 export default {
   name: "CommunityPlaylist",
@@ -101,165 +95,59 @@ export default {
   data: function () {
     return {
       is_downloading: false,
-      patterns: [],
-      apatterns: [],
-      allPatterns: [],
-      existingPatterns: [],
+      playlist: {
+        name: "",
+      },
+      tracks: [],
     };
   },
   methods: {
-    downloadPlaylist: async function () {
-      this.quasar.loading.show({
-        delay: 400, // ms
-      });
-
-      //Download all patterns that don't currently exist on SPIFFS
-      for (let i = 0; i < this.apatterns.length; i++) {
-        const pattern = this.apatterns[i];
-        if (!pattern.is_downloaded) {
-          await this.downloadPattern(pattern);
-        }
-      }
-
-      //Generate sequence file and upload to robot
-      let seqFile = "";
-      for (let i = 0; i < this.apatterns.length; i++) {
-        const pattern = this.apatterns[i];
-        seqFile +=
-          pattern.track_id + "-" + pattern.name.replace(/-/g, "") + ".thr\n";
-      }
-
-      var formData = new FormData();
-      var blob = new Blob([seqFile], { type: "text/plain" });
-      formData.append(
-        "file",
-        blob,
-        this.$route.params.id +
-          "-" +
-          this.$route.params.name.replace(/-/g, "") +
-          ".seq"
-      );
-      await this.$axios.post(
-        this.store.tableBaseURL + "/uploadtofileman",
-        formData,
-        {
-          headers: {
-            "Content-Type": "multipart/form-data",
-          },
-        }
-      );
-
-      console.log(seqFile);
-
-      this.quasar.loading.hide();
-    },
     downloadPattern: async function (pattern) {
       pattern.is_downloading = true;
 
-      //Get pattern data from Webcenter
-      const ptData = (
-        await this.$axios.post(
-          "https://webcenter.sisyphus-industries.com/tracks/" +
-            pattern.track_id +
-            "/download",
-          "pi_id=00000000dad7f8cc&mac_address=",
-          { headers: { Authorization: this.store } }
-        )
-      ).data;
-      var formData = new FormData();
-      var blob = new Blob([ptData], { type: "text/plain" });
-      formData.append(
-        "file",
-        blob,
-        pattern.track_id + "-" + pattern.name.replace(/-/g, "") + ".thr"
-      );
-      await this.$axios.post(
-        this.store.tableBaseURL + "/uploadtofileman",
-        formData,
-        {
-          headers: {
-            "Content-Type": "multipart/form-data",
-          },
-        }
-      );
+      await this.files.addTrack(pattern);
+
       pattern.is_downloading = false;
       pattern.is_downloaded = true;
     },
-    loadMoreTracks: function (index, done) {
-      let i = 0;
-      this.allPatterns.forEach((pattern) => {
-        i++;
-        if (i < 10) {
-          this.allPatterns.shift();
-          this.patterns.push(pattern);
-        }
-      });
-      done();
-    },
-    openPlaylist: function (pname) {
-      this.$router.push("/community/playlist/" + pname);
-    },
-    refreshFiles: async function (done) {
-      if (this.store.secure.webcenterToken == "") {
-        //Log in to Webcenter
-        await this.store.loginToWebCenter();
-      }
-
-      //Get all files on bot
-      await this.$axios
-        .get(this.store.tableBaseURL + "/filelist")
-        .then((response) => {
-          response.data.files.forEach((file) => {
-            if (file.name.includes(".thr") || file.name.includes(".THR")) {
-              //thr
-              this.existingPatterns.push(file.name.split("-")[0]);
-            }
-          });
-        });
-
-      //Get popular tracks
-      await this.$axios
-        .get(
-          "https://webcenter.sisyphus-industries.com/playlists/" +
-            this.$route.params.id +
-            ".json",
-          { headers: { Authorization: this.store.secure.webcenterToken } }
-        )
-        .then((response) => {
-          const tracks = response.data.resp;
-          tracks.forEach((track) => {
-            if (track.type == "track") {
-              track.is_downloading = false;
-              track.is_downloaded = false;
-              if (this.existingPatterns.includes(track.track_id)) {
-                track.is_downloaded = true;
-              }
-              this.apatterns.push(track);
-              this.allPatterns.push(track);
-            }
-          });
-        });
-
-      //load first ten patterns into list
-      let i = 0;
-      this.allPatterns.forEach((pattern) => {
-        i++;
-        if (i < 10) {
-          this.allPatterns.shift();
-          this.patterns.push(pattern);
-        }
-      });
-      done();
-    },
   },
-  mounted: function () {
-    this.refreshFiles();
+  async mounted() {
+    this.quasar.loading.show({ delay: 400 });
+    if (this.store.secure.webcenterToken == "") {
+      //Log in to Webcenter
+      await this.store.loginToWebCenter();
+    }
+
+    //Get popular tracks
+    await this.$axios
+      .get(
+        "https://webcenter.sisyphus-industries.com/playlists/" +
+          this.$route.params.id +
+          ".json",
+        { headers: { Authorization: this.store.secure.webcenterToken } }
+      )
+      .then((response) => {
+        const tracks = response.data.resp;
+        tracks.forEach((track) => {
+          if (track.type == "track") {
+            track.is_downloading = false;
+            track.is_downloaded =
+              this.files.tracks.find((trackobj) => trackobj.id === track.id) !=
+              undefined;
+            this.tracks.push(track);
+          } else {
+            this.playlist = track;
+          }
+        });
+      });
+    this.quasar.loading.hide();
   },
   setup() {
     const store = useMainStore();
+    const files = useFilesStore();
     const quasar = useQuasar();
 
-    return { store };
+    return { store, files, quasar };
   },
 };
 </script>

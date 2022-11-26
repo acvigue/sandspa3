@@ -70,7 +70,6 @@
         />
         <q-icon name="add" style="font-size: 25px" />
       </q-card-section>
-
     </q-card>
     <q-card style="margin: 2vw" bordered class="my-card">
       <q-card-section class="row justify-between">
@@ -110,7 +109,7 @@
 <script>
 import { useQuasar } from "quasar";
 import { useMainStore } from "src/stores/main";
-import { toRaw } from 'vue';
+import { toRaw } from "vue";
 
 export default {
   name: "ControlPage",
@@ -166,10 +165,14 @@ export default {
         type: "negative",
         message: "Robot reset",
       });
-    }
+    },
   },
   mounted() {
-    this.solidcolor = this.rgbToHex(this.store.raw.redVal, this.store.raw.greenVal, this.store.raw.blueVal);
+    this.solidcolor = this.rgbToHex(
+      this.store.raw.redVal,
+      this.store.raw.greenVal,
+      this.store.raw.blueVal
+    );
     this.lightingMode = this.store.effectArray[this.store.raw.effectID];
   },
   watch: {

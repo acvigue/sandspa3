@@ -17,7 +17,13 @@
 
     <q-infinite-scroll @load="loadMoreTracks" :offset="250">
       <q-list bordered separator>
-        <q-item v-for="pattern in patterns" :key="pattern.id">
+        <q-item
+          clickable
+          v-ripple
+          @click="openPlaylist(pattern.playlist_id)"
+          v-for="pattern in patterns"
+          :key="pattern.id"
+        >
           <q-inner-loading :showing="pattern.is_downloading">
             <q-spinner size="50px" color="black" />
           </q-inner-loading>
@@ -43,7 +49,7 @@
           </q-item-section>
           <q-item-section avatar>
             <q-btn
-              @click="downloadPattern(pattern)"
+              @click.stop="downloadPattern(pattern)"
               v-if="!pattern.is_downloaded && !pattern.is_downloading"
               round
               flat
@@ -54,6 +60,7 @@
             />
             <q-btn
               v-if="pattern.is_downloaded"
+              @click.stop="function() {}"
               round
               flat
               color="white"
@@ -93,17 +100,15 @@ export default {
   data: function () {
     return {
       patterns: [],
-      allPatterns: []
+      allPatterns: [],
     };
   },
   computed: {
     pageTitle() {
       if (this.$route.params.sort == "newest") {
         return "Newest Tracks";
-      } else if (this.$route.params.sort == "popular") {
-        return "Popular Tracks";
       } else {
-        return "Playlists";
+        return "Popular Tracks";
       }
     },
   },
@@ -127,8 +132,8 @@ export default {
       });
       done();
     },
-    openPlaylist: function (pname) {
-      this.$router.push("/community/playlist/" + pname);
+    openPlaylist: function (id) {
+      this.$router.push(`/community/playlist/${id}`);
     },
   },
   async mounted() {
@@ -141,34 +146,34 @@ export default {
       await this.store.loginToWebCenter();
     }
 
-    if (this.$route.params.sort != "playlists") {
-      const sort = this.$route.params.sort == "newest" ? "newest_designs" : "most_popular";
+    const sort =
+      this.$route.params.sort == "newest" ? "newest_designs" : "most_popular";
 
-      await this.$axios
-        .get(
-          `https://webcenter.sisyphus-industries.com/tracks.json?sort=${sort}`,
-          { headers: { Authorization: this.store.secure.webcenterToken } }
-        )
-        .then((response) => {
-          const tracks = response.data.resp;
-          tracks.forEach((track) => {
-            track.is_downloading = false;
-            track.is_downloaded = (this.files.tracks.find(trackobj => trackobj.id === track.id) != undefined);
-            this.allPatterns.push(track);
-          });
+    await this.$axios
+      .get(
+        `https://webcenter.sisyphus-industries.com/tracks.json?sort=${sort}`,
+        { headers: { Authorization: this.store.secure.webcenterToken } }
+      )
+      .then((response) => {
+        const tracks = response.data.resp;
+        tracks.forEach((track) => {
+          track.is_downloading = false;
+          track.is_downloaded =
+            this.files.tracks.find((trackobj) => trackobj.id === track.id) !=
+            undefined;
+          this.allPatterns.push(track);
         });
-
-      //load first ten patterns into list
-      let i = 0;
-      this.allPatterns.forEach((pattern) => {
-        i++;
-        if (i < 10) {
-          this.allPatterns.shift();
-          this.patterns.push(pattern);
-        }
       });
-    } else {
-    }
+
+    //load first ten patterns into list
+    let i = 0;
+    this.allPatterns.forEach((pattern) => {
+      i++;
+      if (i < 10) {
+        this.allPatterns.shift();
+        this.patterns.push(pattern);
+      }
+    });
 
     this.quasar.loading.hide();
   },
