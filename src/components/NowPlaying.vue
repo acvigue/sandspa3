@@ -5,13 +5,13 @@
     <div class="col" @click="$router.push('/')">
       <div v-if="store.isPlaylist" class="nowplaying__container-topline">
         Playing from
-        {{ store.playlistName }}
+        {{ files.getPlaylist(store.playlistID)?.name }}
       </div>
       <div v-if="!store.isPlaylist" class="nowplaying__container-topline">
         Now Playing
       </div>
       <div class="nowplaying__container-trackname">
-        {{ store.fileName }}
+        {{ files.getTrack(store.trackID)?.name }}
       </div>
     </div>
     <div>
@@ -59,16 +59,19 @@
 
 <script>
 import { useMainStore } from "src/stores/main";
+import { useFilesStore } from "src/stores/files";
 import { useQuasar } from "quasar";
 
 export default {
   name: "NowPlaying",
   setup() {
     const store = useMainStore();
+    const files = useFilesStore();
     const quasar = useQuasar();
 
     return {
       store,
+      files,
       quasar,
     };
   },

@@ -89,37 +89,16 @@ export const useMainStore = defineStore("main", {
 
   getters: {
     isPlaylist(state) {
-      return state.raw.playlist == "true";
+      return state.raw.playlist == true;
     },
     queuedMoves(state) {
       return state.raw.Qd;
     },
-    fileName(state) {
-      try {
-        return state.raw.file
-          .split("-")[1]
-          .replace(".thr", "")
-          .replace(".THR", "");
-      } catch (e) {
-        return state.raw.file;
-      }
-    },
-    playlistName(state) {
-      try {
-        return state.raw.playlistName
-          .split("-")[1]
-          .replace("sd/", "")
-          .replace(".seq", "")
-          .replace(".SEQ", "");
-      } catch (e) {
-        return state.raw.playlistName;
-      }
-    },
     trackID(state) {
-      return state.raw.file.split("-")[0].replace("sd/", "");
+      return state.raw.file.replace("/sd/", "").replace('.thr','');
     },
     playlistID(state) {
-      return state.raw.playlistName.split("-")[0].replace("sd/", "");
+      return state.raw.playlistName.replace("/sd/", "").replace('.seq','');
     },
   },
 
@@ -174,6 +153,15 @@ export const useMainStore = defineStore("main", {
       if (this.raw.ledBrightness != number) {
         console.log(`setting brightness to ${number}`);
         this.raw.ledBrightness = number;
+        await this._updateLedConfig();
+      }
+    },
+
+    async setLedOn(enabled) {
+      let int = (enabled == true ? 1 : 0);
+      if (this.raw.ledOn != int) {
+        console.log(`setting ledon to ${int}`);
+        this.raw.ledOn = int;
         await this._updateLedConfig();
       }
     },

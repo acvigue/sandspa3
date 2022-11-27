@@ -142,6 +142,45 @@
         </template>
       </draggable>
     </q-list>
+
+    <q-list bordered separator>
+      <q-item
+          style="border-bottom: 1px solid #ccc"
+          clickable
+          v-ripple
+          v-for="element in tracks"
+          v-bind:key="element.id"
+          @click.stop="openTrack(element.id)"
+        >
+          <q-item-section avatar>
+            <img
+              style="height: 100px;"
+              :src="
+                'https://webcenter.sisyphus-industries.com/uploads/track/thr/' +
+                element.track_id +
+                '/thumb_400.png'
+              "
+            />
+          </q-item-section>
+          <q-item-section>
+            <q-item-label class="home__item-title">{{
+              element.name
+            }}</q-item-label>
+          </q-item-section>
+          <q-item-section avatar>
+            <q-btn
+              @click.stop="tracks.splice(i, 1)"
+              v-if="editing == true"
+              round
+              flat
+              color="white"
+              text-color="black"
+              size="lg"
+              icon="remove"
+            />
+          </q-item-section>
+        </q-item>
+    </q-list>
   </div>
 </template>
 
@@ -245,6 +284,7 @@ export default {
   async mounted() {
     if (this.$route.params.id == "all_tracks") {
       this.allTrackMode = true;
+      this.tracks = this.files.tracks;
     } else {
       this.playlist = this.files.playlists.find((trackobj) => trackobj.id === this.$route.params.id);
       

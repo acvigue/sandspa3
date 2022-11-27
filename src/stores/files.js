@@ -172,5 +172,11 @@ export const useFilesStore = defineStore("files", {
 
       return true;
     },
+    getPlaylist(id) {
+      return this.playlists.find((trackobj) => trackobj.id === id)
+    },
+    getTrack(id) {
+      return this.tracks.find((trackobj) => trackobj.id === id)
+    }
   },
 });

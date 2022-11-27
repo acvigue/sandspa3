@@ -23,7 +23,7 @@
         <q-toolbar-title
           class="text-center text-grey-4"
           v-if="store.status != 'idle' && store.queuedMoves != 0"
-          >Playing from {{ store.playlistName }}</q-toolbar-title
+          >Playing from {{ files.getPlaylist(store.playlistID).name }}</q-toolbar-title
         >
       </q-toolbar>
     </q-header>
@@ -57,14 +57,14 @@
     >
       <q-card-section class="text-center">
         <img
-          style="width: 80vw"
+          style="width: 80vw; max-width: 400px;"
           :src="
             'https://webcenter.sisyphus-industries.com/uploads/track/thr/' +
-            store.trackID +
+            files.getTrack(store.trackID)?.track_id +
             '/thumb_400.png'
           "
         /><br />
-        <div class="text-h6">{{ store.fileName }}</div>
+        <div class="text-h6">{{ files.getTrack(store.trackID)?.name }}</div>
         <br />
         <q-btn
           @click="store.pause()"
@@ -86,7 +86,7 @@
       <q-card-section
         class="q-pt-none text-h6"
         style="padding-top: 1vh"
-        v-if="store.isPlaylist"
+        v-if="false"
       >
         Next Up<br />
         <q-list separator style="margin-top: 2vh">
@@ -136,6 +136,7 @@
 <script>
 import { useMainStore } from "src/stores/main";
 import { useQuasar } from "quasar";
+import { useFilesStore } from "src/stores/files";
 
 export default {
   name: "HomePage",
@@ -146,10 +147,12 @@ export default {
   },
   setup() {
     const store = useMainStore();
+    const files = useFilesStore();
     const quasar = useQuasar();
 
     return {
       store,
+      files,
       quasar,
     };
   },

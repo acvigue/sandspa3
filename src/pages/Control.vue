@@ -8,7 +8,11 @@
 
     <q-card style="margin: 2vw" bordered class="my-card">
       <q-card-section>
-        <div class="text-h5 text-center">Lights</div>
+        <div class="row justify-between">
+          <div class="text-h5">Lights</div>
+          <q-toggle v-model="ledOnBool"/>
+        </div>
+        <br>
         <div class="text-h6">Brightness</div>
       </q-card-section>
 
@@ -20,10 +24,12 @@
           v-model="store.raw.ledBrightness"
           :min="0"
           :max="255"
+          :disable="!ledOnBool || autoDimBool"
           label
-          @change="store._updateLedConfig()"
+          @change="updateLights()"
         />
         <q-icon name="brightness_7" style="font-size: 25px" />
+        <q-toggle left-label label="Auto-Dim" v-model="autoDimBool"/>
       </q-card-section>
 
       <q-card-section>
@@ -35,22 +41,23 @@
           style="width: 95% !important"
           outlined
           v-model="lightingMode"
+          :disable="!ledOnBool"
           :options="store.effectArray"
           color="black"
         >
-          <template v-slot:append v-if="lightingMode == 'Static'">
+        </q-select>
+        <template v-if="ledOnBool">
             <q-icon
-              @click.stop
               name="colorize"
               :style="'color: ' + solidcolor"
               class="cursor-pointer"
+              size="sm"
             >
               <q-popup-proxy transition-show="scale" transition-hide="scale">
-                <q-color v-model="solidcolor" />
+                <q-color no-header no-footer v-model="solidcolor"/>
               </q-popup-proxy>
             </q-icon>
           </template>
-        </q-select>
       </q-card-section>
 
       <q-card-section>
@@ -62,11 +69,11 @@
         <q-slider
           color="black"
           style="width: 75% !important"
-          v-model="store.raw.effectSpeed"
+          v-model="invertSpeed"
+          :disable="!ledOnBool"
           :min="0"
-          :max="255"
+          :max="5000"
           label
-          @change="store._updateLedConfig()"
         />
         <q-icon name="add" style="font-size: 25px" />
       </q-card-section>
@@ -111,6 +118,7 @@ import { useQuasar } from "quasar";
 import { useMainStore } from "src/stores/main";
 import { toRaw } from "vue";
 
+
 export default {
   name: "ControlPage",
   components: {},
@@ -119,7 +127,7 @@ export default {
       patterns: [],
       playlists: [],
       solidcolor: "",
-      lightingMode: null,
+      lightingMode: null
     };
   },
   methods: {
@@ -166,6 +174,11 @@ export default {
         message: "Robot reset",
       });
     },
+    async updateLights() {
+      this.quasar.loading.show({ delay: 250 });
+      await this.store._updateLedConfig();
+      this.quasar.loading.hide();
+    }
   },
   mounted() {
     this.solidcolor = this.rgbToHex(
@@ -175,17 +188,50 @@ export default {
     );
     this.lightingMode = this.store.effectArray[this.store.raw.effectID];
   },
+  computed: {
+    ledOnBool: {
+       get () {
+         return this.store.raw.ledOn === 1
+       },
+      set (value) {
+         this.store.raw.ledOn = value ? 1 : 0
+         this.updateLights();
+      }
+    },
+    autoDimBool: {
+       get () {
+         return this.store.raw.autoDim === 1
+       },
+      set (value) {
+         this.store.raw.autoDim = value ? 1 : 0
+         this.updateLights();
+      }
+    },
+    invertSpeed: {
+       get () {
+         return 5000 - this.store.raw.effectSpeed;
+       },
+      set (value) {
+         this.store.raw.effectSpeed = 5000 - value;
+         this.updateLights();
+      }
+    }
+  },
   watch: {
-    solidcolor: function (val) {
+    solidcolor: async function (val) {
       const newR = this.hexToRgb(val).r;
       const newG = this.hexToRgb(val).g;
       const newB = this.hexToRgb(val).b;
 
-      this.store.setColor(newR, newG, newB);
+      this.quasar.loading.show({ delay: 250 });
+      await this.store.setColor(newR, newG, newB);
+      this.quasar.loading.hide();
     },
-    lightingMode: function (val) {
+    lightingMode: async function (val) {
+      this.quasar.loading.show({ delay: 250 });
       this.store.setEffect(this.store.effectArray.indexOf(val));
-    },
+      this.quasar.loading.hide();
+    }
   },
   setup() {
     const store = useMainStore();
