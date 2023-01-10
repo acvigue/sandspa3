@@ -18,12 +18,13 @@
       </q-toolbar>
       <q-toolbar
         style="height: 5px !important; margin-top: -25px"
-        v-if="!store.isPlaylist"
+        v-if="store.isPlaylist"
       >
         <q-toolbar-title
           class="text-center text-grey-4"
           v-if="store.status != 'idle' && store.queuedMoves != 0"
-          >Playing from {{ files.getPlaylist(store.playlistID).name }}</q-toolbar-title
+          >Playing from
+          {{ files.getPlaylist(store.playlistID)?.name }}</q-toolbar-title
         >
       </q-toolbar>
     </q-header>
@@ -57,7 +58,7 @@
     >
       <q-card-section class="text-center">
         <img
-          style="width: 80vw; max-width: 400px;"
+          style="width: 80vw; max-width: 400px"
           :src="
             'https://webcenter.sisyphus-industries.com/uploads/track/thr/' +
             files.getTrack(store.trackID)?.track_id +
@@ -75,7 +76,7 @@
           icon="pause"
         />
         <q-btn
-          @click="store.play()"
+          @click="store.resume()"
           v-if="store.status == 'paused' && store.queuedMoves != 0"
           round
           color="black"
@@ -144,6 +145,11 @@ export default {
     return {
       nextup: [],
     };
+  },
+  mounted() {
+    setTimeout(() => {
+      console.log(this.store);
+    }, 2000);
   },
   setup() {
     const store = useMainStore();

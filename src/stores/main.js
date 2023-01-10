@@ -20,7 +20,7 @@ export const useMainStore = defineStore("main", {
       effectSpeed: 0,
       espV: "",
     },
-    tableBaseURL: "http://sandy2.local",
+    tableBaseURL: "https://sandy2.vigue.me",
     secure: {
       webcenterUsername: "acvigue@me.com",
       webcenterPassword: "Goober312$",
@@ -85,6 +85,22 @@ export const useMainStore = defineStore("main", {
       "TwinkleFOX",
       "Custom",
     ],
+    _lastRecievedRaw: {
+      Qd: 0,
+      playlist: false,
+      file: "",
+      rpm: 0,
+      playlistName: "",
+      autoDim: 0,
+      redVal: 0,
+      greenVal: 0,
+      blueVal: 0,
+      ledBrightness: 0,
+      ledOn: 0,
+      effectID: 0,
+      effectSpeed: 0,
+      espV: "",
+    },
   }),
 
   getters: {
@@ -95,10 +111,10 @@ export const useMainStore = defineStore("main", {
       return state.raw.Qd;
     },
     trackID(state) {
-      return state.raw.file.replace("/sd/", "").replace('.thr','');
+      return state.raw.file.replace("sd/", "").replace(".thr", "");
     },
     playlistID(state) {
-      return state.raw.playlistName.replace("/sd/", "").replace('.seq','');
+      return state.raw.playlistName.replace("sd/", "").replace(".seq", "");
     },
   },
 
@@ -158,7 +174,7 @@ export const useMainStore = defineStore("main", {
     },
 
     async setLedOn(enabled) {
-      let int = (enabled == true ? 1 : 0);
+      let int = enabled == true ? 1 : 0;
       if (this.raw.ledOn != int) {
         console.log(`setting ledon to ${int}`);
         this.raw.ledOn = int;

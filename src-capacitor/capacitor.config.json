@@ -1,0 +1,7 @@
+{
+  "appId": "me.vigue.sandspa3",
+  "appName": "SandSPA",
+  "bundledWebRuntime": false,
+  "npmClient": "yarn",
+  "webDir": "www"
+}

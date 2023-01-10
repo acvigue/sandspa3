@@ -24,7 +24,7 @@
         icon="pause"
       />
       <q-btn
-        @click.stop="store.play()"
+        @click.stop="store.resume()"
         v-if="store.status == 'paused'"
         round
         color="black"
