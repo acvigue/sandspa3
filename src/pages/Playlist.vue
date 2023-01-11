@@ -10,19 +10,12 @@
           class="q-mr-sm"
           @click="$router.go(-1)"
         />
-        <q-toolbar-title
-          class="text-center"
-          v-if="allTrackMode"
+        <q-toolbar-title class="text-center" v-if="allTrackMode"
           >All Tracks</q-toolbar-title
         >
-        <q-toolbar-title
-          @click="renameAction()"
-          class="text-center"
-          v-else
-          >{{
-            playlist.name
-          }}</q-toolbar-title
-        >
+        <q-toolbar-title @click="renameAction()" class="text-center" v-else>{{
+          playlist.name
+        }}</q-toolbar-title>
         <q-btn
           @click="editing = !editing"
           v-if="!allTrackMode && editing == false"
@@ -44,12 +37,7 @@
           icon="check"
           class="q-mr-sm"
         />
-        <q-btn
-          v-if="allTrackMode"
-          flat
-          round
-          class="q-mr-sm"
-        />
+        <q-btn v-if="allTrackMode" flat round class="q-mr-sm" />
       </q-toolbar>
       <q-toolbar
         v-if="!allTrackMode"
@@ -72,9 +60,7 @@
           color="white"
           flat
           icon="delete"
-          @click="
-            deleteThisPlaylist();
-          "
+          @click="deleteThisPlaylist()"
         />
       </q-toolbar>
     </q-header>
@@ -104,82 +90,82 @@
 
     <q-list bordered separator>
       <draggable v-model="tracks" :disabled="!editing" item-key="id">
-        <template #item="{element}">
+        <template #item="{ element }">
           <q-item
-          style="border-bottom: 1px solid #ccc"
-          clickable
-          v-ripple
-          @click.stop="openTrack(element.id)"
-        >
-          <q-item-section avatar>
-            <img
-              style="height: 100px;"
-              :src="
-                'https://webcenter.sisyphus-industries.com/uploads/track/thr/' +
-                element.track_id +
-                '/thumb_400.png'
-              "
-            />
-          </q-item-section>
-          <q-item-section>
-            <q-item-label class="home__item-title">{{
-              element.name
-            }}</q-item-label>
-          </q-item-section>
-          <q-item-section avatar>
-            <q-btn
-              @click.stop="tracks.splice(i, 1)"
-              v-if="editing == true"
-              round
-              flat
-              color="white"
-              text-color="black"
-              size="lg"
-              icon="remove"
-            />
-          </q-item-section>
-        </q-item>
+            style="border-bottom: 1px solid #ccc"
+            clickable
+            v-ripple
+            @click.stop="openTrack(element.id)"
+          >
+            <q-item-section avatar>
+              <img
+                style="height: 100px"
+                :src="
+                  'https://webcenter.sisyphus-industries.com/uploads/track/thr/' +
+                  element.track_id +
+                  '/thumb_400.png'
+                "
+              />
+            </q-item-section>
+            <q-item-section>
+              <q-item-label class="home__item-title">{{
+                element.name
+              }}</q-item-label>
+            </q-item-section>
+            <q-item-section avatar>
+              <q-btn
+                @click.stop="tracks.splice(i, 1)"
+                v-if="editing == true"
+                round
+                flat
+                color="white"
+                text-color="black"
+                size="lg"
+                icon="remove"
+              />
+            </q-item-section>
+          </q-item>
         </template>
       </draggable>
     </q-list>
 
     <q-list bordered separator>
       <q-item
-          style="border-bottom: 1px solid #ccc"
-          clickable
-          v-ripple
-          v-for="element in tracks"
-          v-bind:key="element.id"
-          @click.stop="openTrack(element.id)"
-        >
-          <q-item-section avatar>
-            <img
-              style="height: 100px;"
-              :src="
-                'https://webcenter.sisyphus-industries.com/uploads/track/thr/' +
-                element.track_id +
-                '/thumb_400.png'
-              "
-            />
-          </q-item-section>
-          <q-item-section>
-            <q-item-label class="home__item-title">{{
-              element.name
-            }}</q-item-label>
-          </q-item-section>
-          <q-item-section avatar>
-            <q-btn
-              @click.stop="tracks.splice(i, 1)"
-              v-if="editing == true"
-              round
-              flat
-              color="white"
-              text-color="black"
-              size="lg"
-              icon="remove"
-            />
-          </q-item-section>
-        </q-item>
+        style="border-bottom: 1px solid #ccc"
+        clickable
+        v-ripple
+        v-for="element in tracks"
+        v-bind:key="element.id"
+        @click.stop="openTrack(element.id)"
+      >
+        <q-item-section avatar>
+          <img
+            style="height: 100px"
+            :src="
+              'https://webcenter.sisyphus-industries.com/uploads/track/thr/' +
+              element.track_id +
+              '/thumb_400.png'
+            "
+          />
+        </q-item-section>
+        <q-item-section>
+          <q-item-label class="home__item-title">{{
+            element.name
+          }}</q-item-label>
+        </q-item-section>
+        <q-item-section avatar>
+          <q-btn
+            @click.stop="tracks.splice(i, 1)"
+            v-if="editing == true"
+            round
+            flat
+            color="white"
+            text-color="black"
+            size="lg"
+            icon="remove"
+          />
+        </q-item-section>
+      </q-item>
     </q-list>
   </div>
 </template>
@@ -204,7 +190,7 @@ export default {
       renameprompt: false,
       name: "",
       playlist: {},
-      allTrackMode: false
+      allTrackMode: false,
     };
   },
   methods: {
@@ -218,10 +204,13 @@ export default {
         delay: 100, // ms
       });
 
-      this.files.playlists.splice(this.files.playlists.indexOf(this.playlist), 1);
+      this.files.playlists.splice(
+        this.files.playlists.indexOf(this.playlist),
+        1
+      );
       await this.files.saveManifest();
 
-      await this.store.delete(`/sd/${playlist.id}.seq`);
+      await this.store.delete(`/sd/${this.playlist.id}.seq`);
 
       this.quasar.loading.hide();
       this.quasar.notify({
@@ -236,7 +225,8 @@ export default {
         delay: 100, // ms
       });
 
-      this.files.playlists[this.files.playlists.indexOf(this.playlist)].name = this.name;
+      this.files.playlists[this.files.playlists.indexOf(this.playlist)].name =
+        this.name;
 
       await this.files.saveManifest();
 
@@ -261,16 +251,21 @@ export default {
         playlistFile += pattern.id + ".thr\n";
       });
 
-      this.files.playlists[this.files.playlists.indexOf(this.playlist)].tracks = this.tracks;
+      this.files.playlists[this.files.playlists.indexOf(this.playlist)].tracks =
+        this.tracks;
 
       var formData = new FormData();
       var blob = new Blob([playlistFile], { type: "text/plain" });
       formData.append("file", blob, `${this.$route.params.id}.seq`);
-      await this.$axios.post(this.store.tableBaseURL + "/uploadtofileman", formData, {
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
-      });
+      await this.$axios.post(
+        this.store.tableBaseURL + "/uploadtofileman",
+        formData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      );
 
       await this.files.saveManifest();
 
@@ -279,18 +274,22 @@ export default {
         type: "positive",
         message: "Saved",
       });
-    }
+    },
   },
   async mounted() {
     if (this.$route.params.id == "all_tracks") {
       this.allTrackMode = true;
       this.tracks = this.files.tracks;
     } else {
-      this.playlist = this.files.playlists.find((trackobj) => trackobj.id === this.$route.params.id);
-      
+      this.playlist = this.files.playlists.find(
+        (trackobj) => trackobj.id === this.$route.params.id
+      );
+
       this.playlist.tracks.forEach((v, i) => {
-        this.tracks.push(this.files.tracks.find((trackobj) => trackobj.id == v.id));
-      })
+        this.tracks.push(
+          this.files.tracks.find((trackobj) => trackobj.id == v.id)
+        );
+      });
     }
     this.loaded = true;
   },
